@@ -93,7 +93,7 @@ class PhotoMakerStableDiffusionXLPipeline(StableDiffusionXLPipeline):
                 weights_name=weight_name,
                 cache_dir=cache_dir,
                 force_download=force_download,
-                resume_download=resume_download,
+                # resume_download=resume_download,
                 proxies=proxies,
                 local_files_only=local_files_only,
                 token=token,
@@ -441,7 +441,7 @@ class PhotoMakerStableDiffusionXLPipeline(StableDiffusionXLPipeline):
                 prompt_embeds = None
                 pooled_prompt_embeds_text_only_arr.append(pooled_prompt_embeds_text_only)
                 pooled_prompt_embeds_text_only = None
-                
+
             # 7. Prepare timesteps
             self.scheduler.set_timesteps(num_inference_steps, device=device)
             timesteps = self.scheduler.timesteps
@@ -509,7 +509,7 @@ class PhotoMakerStableDiffusionXLPipeline(StableDiffusionXLPipeline):
                 )
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
 
-                if i <= start_merge_step or nc_flag:  
+                if i <= start_merge_step or nc_flag:
                     current_prompt_embeds = torch.cat(
                         [negative_prompt_embeds, prompt_embeds_text_only], dim=0
                     )
