@@ -1,4 +1,9 @@
-spaces
-peft
-diffusers
+spaces~=0.29.3
+peft~=0.12.0
+diffusers~=0.30.0
+
+opencv-python~=4.10.0.84
+insightface~=0.7.3
+onnxruntime~=1.18.1
+
 omegaconf~=2.3.0
