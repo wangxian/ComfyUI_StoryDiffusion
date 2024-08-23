@@ -9,35 +9,34 @@ MS-Diffusion origin From: [link](https://github.com/MS-Diffusion/MS-Diffusion)
 
 NEW Update
 ---
+--2024/08/23
+--Flux fp8 single weights only support "Kijai/flux-fp8" or auto save's pt weights.
+
+--2024/08/18
+-- Now clip checkpoints no need diffusers_repo,you can using "clip_g.safetensors" or other base from "CLIP-ViT-bigG-14-laion2B-39B-b160k";   
+-- Refactoring some code about MS-diffusion,controlnet still normal quality;    
+
+--2024/08/14   
+-- 2 role in 1 img now using [A]...[B]... mode,  
+-- if first using flux repo,will automatically save the PT file on checkpoint dir(name: transform_time.pt),So you only need to run the repo and flux once separately (without completing it) to obtain the PT model, Recommend using "repo+transfomer.pt" or "repo+other fp8.safetensors" or "repo+any_name.pt(rename from transfomer )",
+
 --2024/08/08   
 --2 ways to using flux，using repo like :"black-forest-labs/FLUX.1-dev" or "X:/xxx/xxx/black-forest-labs/FLUX.1-dev"  and ckpt_name="none" in new loader node or old,or using repo like :"black-forest-labs/FLUX.1-dev" or "X:/xxx/xxx/black-forest-labs/FLUX.1-dev",and using single ckpt like "flux1-dev-fp8.safetensors";  
 --flux img2img will be later..   
 -- ini4 mode not tested.   
 
---2024/08/06  
---add Flux diffusers pipeline,need 16G VRAM and more,using repo like :"black-forest-labs/FLUX.1-dev" or "X:/xxx/xxx/black-forest-labs/FLUX.1-dev"
---The Flux required diffusers 0.30.0 and accelerate 0.30 or new version... and 64G ram if using cup
-
 --2024/08/05
 --Support "kolors" text2img and "kolors"ipadapter img2img,using repo like :"xxx:/xxx/xxx/Kwai-Kolors/Kolors"  (Please refer to the end of the article for detailed file combinations)  
 --support photomaker V2;  
---fix some bug;  
 
 --2024/07/26
---fix some bug,while ControlNet now uses community models.   
+--while ControlNet now uses community models.   
 -- The base model now has only two options: using repo input or selecting the community model...
---Adjusting the model loading of MS has made the speed faster   
 
 --2024/07/09    
 --To fix the bug where MS diffusion cannot run continuously in the txt2img, it is necessary to enable the "reset_txt2img" of the loading model node to be Ture;   
---Fix the error in introducing modules, now change the model storage address to“ models/photomaker”, reuse the model, and avoid wasting hard disk space(the PT model is also located in the photometer directory);  
---Changing the method of selecting models now makes it more convenient to choose other diffusion models;    
-
---Add a Controlnet layout control button, which defaults to automatic programming.   
 --Introducing Controlnet for dual character co image, supporting multi image introduction, 
 --Add the function of saving and loading character models   
---It is known that when adding dual characters to the Wensheng diagram, it can only be run once. If you run it again, you need to fix the bug in the sampler or other options loaded on the model. There is currently no time to fix it;   
-
 
 1.Installation
 -----
@@ -59,29 +58,34 @@ If the module is missing, please pip install
 
 3 Need  model 
 ----
-
+3.1.1base   
 You can directly fill in the repo, such as:"stablityai/table diffusion xl base-1.0", or select the corresponding model in the local diffuser menu (provided that you have the model in the "models/diffuser" directory), or you can directly select a single SDXL community model. The priority of repo or local diffusers is higher than that of individual community models.    
 
 Supports all SDXL based diffusion models (such as "G161222/RealVisXL_V4.0", "sd-community/sdxl-flash"）， It also supports non SD models, such as ("stablediffusionapi/sdxl-unstable-diffusers-y", playground-v2.5-1024px-aesthetic）   
 When using your local SDXL monomer model (for example: Jumpernaut XL_v9-RunDiffusionPhoto_v2. safetensors), please set local_diffusers to none and download the corresponding config files to run.  
 
---using dual role same frame function:      
-
 photomaker-v1.bin    [link](https://huggingface.co/TencentARC/PhotoMaker/tree/main)   
 photomaker-v2.bin    [link](https://huggingface.co/TencentARC/PhotoMaker-V2/tree/main)  
-Need download "ms_adapter.bin" : [link](https://huggingface.co/doge1516/MS-Diffusion/tree/main)    
-Need encoder model "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k":[link](https://huggingface.co/laion/CLIP-ViT-bigG-14-laion2B-39B-b160k)   
-
 ```
 ├── ComfyUI/models/
 |      ├──photomaker/
 |             ├── photomaker-v1.bin
 |             ├── photomaker-v2.bin
-|             ├── ms_adapter.bin
-
 ```
 
-if using kolors:  
+3.1.2 using dual role same frame function:      
+Need download "ms_adapter.bin" : [link](https://huggingface.co/doge1516/MS-Diffusion/tree/main)    
+Need clip_vision model "clip_g.safetensors" or other base from "CLIP-ViT-bigG-14-laion2B-39B-b160k";   
+
+```
+├── ComfyUI/models/
+|      ├──photomaker/
+|             ├── ms_adapter.bin
+|      ├──pclip_vision/
+|             ├── clip_vision_g.safetensors(2.35G) or CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors(3.43G)
+```
+
+3.2 if using kolors:  
 Kwai-Kolors    [link](https://huggingface.co/Kwai-Kolors/Kolors/tree/main)    
 Kolors-IP-Adapter-Plus  [link](https://huggingface.co/Kwai-Kolors/Kolors-IP-Adapter-Plus/tree/main)   
 The file structure is shown in the following figure:
@@ -125,26 +129,6 @@ The file structure is shown in the following figure:
 |               ├──vocab.json
 ```
 
-
-3.2 offline  
-You can fill in the absolute address of the diffusion model in repo, using "/"   
-
---using dual role same frame function:     
-Fill in the absolute path of your local clip model in the "laion/CLIP ViT bigG-14-laion2B-39B-b160k" column, using "/". Please refer to the file structure demonstration below for the required files.        
-```
-├── Any local_path/
-|     ├──CLIP ViT bigG-14-laion2B-39B-b160k/
-|             ├── config.json
-|             ├── preprocessor_config.json
-|             ├──pytorch_model.bin.index.json
-|             ├──pytorch_model-00001-of-00002.bin
-|             ├──pytorch_model-00002-of-00002.bin
-|             ├──special_tokens_map.json
-|             ├──tokenizer.json
-|             ├──tokenizer_config.json
-|             ├──vocab.json
-```
- 
 3.3 The model file example for dual role controllnet is as follows, which only supports SDXL community controllnet    
 ```
 ├── ComfyUI/models/controlne/   
@@ -161,26 +145,32 @@ Control_img image preprocessing, please use other nodes
 
 4 Example
 ----
-txt2img mode uses kolors model using chinese prompt (Latest version)        
-![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/txt2imgkolors.png)
+txt2img mode uses kolors model using chinese prompt (Outdated version examples)        
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/kolorstxt2img.png)
 
-img2img mode, uses kolors model using chinese prompt (Latest version)     
-![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/img2imgkolors.png)
+img2img mode, uses kolors model using chinese prompt (Outdated version examples)     
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/kolorsimg2img.png)
 
-img2img mode, uses photomakeV2 (Latest version)     
-![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/img2imgphotomakev2.png)
+img2img mode, uses photomakeV1 (Outdated version examples)     
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/newimg2imgV1.png)
 
-flux model, txt2img/img2img(Latest version)     
-![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/flux_12G_VRAM.png)
+img2img mode, uses photomakeV2 (Outdated version examples)     
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/newimg2imgV2.png)
 
-img2img_lora_controlnet_2rolein1img mode, add Lora, add dual character co frame (character 1 and character 2), add controllnet control (controllnet can only control dual character co frame) Outdated version examples     
-![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/img2imgcontrolnetdual.png)
+flux model,repo+pt txt2img/img2img(Outdated version examples)     
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/flux_transfomerpy.png)
 
-txt2img_hyperlora_contrlnet_2role1img mode, adding HYper to accelerate Lora, adding dual characters in the same frame (character 1 and character 2), adding controllnet control (controllnet can only control dual characters in the same frame) Outdated version examples   
-![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/txt2img_hyperlora_contrlnet_2role1img.png)
+txt2img2role in 1 image (Latest version)  
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/newtxt2img2role.png)
 
-More ControlNet added dual role co frame (Role 1 and Role 2) Outdated version examples   
-![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/controlnetnum.png) 
+img2img2role in 1 image (Latest version)  
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/2rolein1img.png)
+
+img2img2role in 1 image lora (Latest version)  
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/2rolein1imglora.png)
+
+ControlNet added dual role co frame (Role 1 and Role 2) (Latest version)  
+![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/controlnet.png)
 
 Translate the text into other language examples, and the translation nodes in the diagram can be replaced with any translation node. Outdated version examples     
 ![](https://github.com/smthemex/ComfyUI_StoryDiffusion/blob/main/examples/trans1.png)
@@ -202,12 +192,14 @@ Function Description of Nodes
 --Img_width/img_height: The height and width dimensions of the drawing.   
 --photomake_mode: choice v1 or v2 model;  
 --reset_txt2img: Fixed an error where continuous rendering is not possible when using MS. You need to set "reset_txt2img" to Ture, which will replace the scheduler   
+--"use_int4":flux only,too slowly...   
+
 
 --<Storydiffusion_Sampler>---       
 --Pipe/info: The interface that must be linked;   
 --Image: The interface that must be linked to the image generation diagram. For dual roles, please follow the example and use the built-in image batch node in comfyUI;   
 --Character prompt: The prompt for the character, [character name] must be at the beginning. If using the graphic mode, the keyword "img" must be added, such as a man img;if using  chinese prompt, need["角色名"] or ['角色名']  
---Scene prompts: The prompt for the scene description, [character name], must start at the beginning. It is best for both characters to appear once in the first two lines. [NC] At the beginning, the character does not appear (suitable for non character scenes). When (character A and character B), MS diffusion's dual character mode is enabled, and and the spaces before and after it cannot be ignored# Used for segmented prompt, rendering the entire segment, but only outputting the prompt after #;    
+--Scene prompts: The prompt for the scene description, [character name], must start at the beginning. It is best for both characters to appear once in the first two lines. [NC] At the beginning, the character does not appear (suitable for non character scenes). When [character A] and [character B], MS diffusion's dual character mode is enabled, and and the spaces before and after it cannot be ignored# Used for segmented prompt, rendering the entire segment, but only outputting the prompt after #;    
 --Split prompt: The symbol for splitting the prompt, which does not take effect when it is empty. It is used to normalize paragraphs when the prompt is external. For example, when you pass in 10 lines of text, the hyphen may not be correct, but using a hyphen, such as ";", can effectively distinguish each line.     
 --Negative prompt: only effective when img_style is No_style;      
 --Seed/steps/cfg: suitable for commonly used functions in comfyUI;     
@@ -220,7 +212,7 @@ Function Description of Nodes
 --Save_character: Whether to save the character weights of the current character, file in/ Under ComfyUI_StoryDiffusion/weights/pt, use time as the file name;  
 --Controlnet_modelpath: Controlnet's community  model );   
 --Controllet_scale: control net weight;   
---Layout_guidance: Is automatic layout enabled? (If automatic layout is enabled, it is best to have clear location information in the prompt, such as on the left and where...)..., For example, up and down, etc;    
+--guidance_list: contrlol role's position;     
 
 --<Comic_Type>--         
 --Fonts list: The puzzle node supports custom fonts (place the font file in the fonts directory. fonts/you_font. ttf);   
@@ -233,7 +225,7 @@ Function Description of Nodes
 
 Tips：
 
---Add dual character same frame function, usage method: (A and B) have lunch, A. B is the role name, and the middle and parentheses cannot be removed. The parentheses are the effective conditions!!!   
+--Add dual character same frame function, usage method: [A] .. [B]..., A. B is the role name, The parentheses are the effective conditions!!!   
 --Because the MS diffusion function was called, in order to use dual role same frame, it is necessary to add an encoder model (laion/CLIP ViT bigG-14 laion2B-39B-b160k, which cannot be replaced with others) and an ip adapet fine-tuning model (ms-adapter.bin, which cannot be replaced);   
 --Optimize the loading of Lora's code, and when using accelerated Lora, trigger_words will no longer be added to the prompt list;   
 --Playground v2.5 can be effective on txt2img, and there is no Playground v2.5 style Lora available when accelerated Lora can be used;   
@@ -269,6 +261,7 @@ My ComfyUI node list：
 17、ComfyUI_EchoMimic node:  [ComfyUI_EchoMimic](https://github.com/smthemex/ComfyUI_EchoMimic)   
 18、ComfyUI_FollowYourEmoji node: [ComfyUI_FollowYourEmoji](https://github.com/smthemex/ComfyUI_FollowYourEmoji)   
 19、ComfyUI_Diffree node: [ComfyUI_Diffree](https://github.com/smthemex/ComfyUI_Diffree)     
+20、ComfyUI_FoleyCrafter node: [ComfyUI_FoleyCrafter](https://github.com/smthemex/ComfyUI_FoleyCrafter)
 
 Citation
 ------
