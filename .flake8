@@ -1,0 +1,14 @@
+[flake8]
+max-line-length = 320
+exclude = .git,__pycache__,__init__.py,.mypy_cache,.pytest_cache,tmp,logs
+ignore =
+  # F401: imported but unused
+  F401,
+  F841,
+
+  # E305: expected 2 blank lines after class or function definition, found 1Flake8(E305)
+  # E305,
+per-file-ignores =
+  # imported but unused
+  base.py: F401
+  __init__.py: F401
