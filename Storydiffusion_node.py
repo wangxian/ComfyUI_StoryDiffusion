@@ -718,7 +718,7 @@ def process_generation(
         height,
         load_chars,
         lora,
-        trigger_words,photomake_mode,use_kolor,use_flux,auraface
+        trigger_words, photomake_mode, use_kolor, use_flux, auraface
 ):  # Corrected font_choice usage
 
     if len(general_prompt.splitlines()) >= 3:
@@ -733,26 +733,27 @@ def process_generation(
     global write
     global cur_step, attn_count
 
-    #load_chars = load_character_files_on_running(unet, character_files=char_files)
+    # load_chars = load_character_files_on_running(unet, character_files=char_files)
 
     prompts_origin = prompt_array.splitlines()
-    prompts = [prompt for prompt in prompts_origin if not len(extract_content_from_brackets(prompt))>=2]  # 剔除双角色
+    prompts = [prompt for prompt in prompts_origin if not len(extract_content_from_brackets(prompt)) >= 2]  # 剔除双角色
     if use_kolor:
         add_trigger_words = "," + trigger_words + " " + "风格" + ";"
     else:
         add_trigger_words = "," + trigger_words + " " + "style" + ";"
-    if lora :
+
+    if lora:
         if lora in lora_lightning_list:
             prompts = remove_punctuation_from_strings(prompts)
         else:
             prompts = remove_punctuation_from_strings(prompts)
             prompts = [item + add_trigger_words for item in prompts]
 
-    global  character_index_dict, invert_character_index_dict, ref_indexs_dict, ref_totals
+    global character_index_dict, invert_character_index_dict, ref_indexs_dict, ref_totals
     global character_dict
 
     character_dict, character_list = character_to_dict(general_prompt, lora, add_trigger_words)
-    #print(character_dict)
+    # print(character_dict)
     start_merge_step = int(float(_style_strength_ratio) / 100 * _num_steps)
     if start_merge_step > 30:
         start_merge_step = 30
@@ -797,8 +798,10 @@ def process_generation(
     if model_type == "img2img":
         # _upload_images = [_upload_images]
         input_id_images_dict = {}
+
         if len(upload_images) != len(character_dict.keys()):
             raise f"You upload images({len(upload_images)}) is not equal to the number of characters({len(character_dict.keys())})!"
+
         for ind, img in enumerate(upload_images):
             input_id_images_dict[character_list[ind]] = [img]  # 已经pil转化了 不用load
             # input_id_images_dict[character_list[ind]] = [load_image(img)]
@@ -808,12 +811,12 @@ def process_generation(
     write = True
     cur_step = 0
     attn_count = 0
-    #id_prompts_no_using, negative_prompt = apply_style(style_name, ["id_prompts"], negative_prompt)
-    #setup_seed(seed_)
+    # id_prompts_no_using, negative_prompt = apply_style(style_name, ["id_prompts"], negative_prompt)
+    # setup_seed(seed_)
     total_results = []
     id_images = []
     results_dict = {}
-    p_num=0
+    p_num = 0
     if photomake_mode == "v2":
         from .utils.insightface_package import FaceAnalysis2, analyze_faces
         if auraface:
@@ -831,7 +834,7 @@ def process_generation(
 
     global cur_character
     if not load_chars:
-        for character_key in character_dict.keys():# 先生成角色对应第一句场景提示词的图片
+        for character_key in character_dict.keys():  # 先生成角色对应第一句场景提示词的图片
             cur_character = [character_key]
             ref_indexs = ref_indexs_dict[character_key]
             current_prompts = [replace_prompts[ref_ind] for ref_ind in ref_indexs]
@@ -841,8 +844,10 @@ def process_generation(
             cur_positive_prompts, cur_negative_prompt = apply_style(
                 style_name, current_prompts, negative_prompt
             )
+
             if use_kolor:
-                cur_negative_prompt=[cur_negative_prompt]
+                cur_negative_prompt = [cur_negative_prompt]
+
             if model_type == "txt2img":
                 if use_flux:
                     id_images = pipe(
@@ -857,26 +862,26 @@ def process_generation(
                     ).images
                 else:
                     if use_kolor:
-                        cur_negative_prompt =  cur_negative_prompt * len(cur_positive_prompts) if len( cur_negative_prompt) != len(
-                            cur_positive_prompts) else  cur_negative_prompt
+                        cur_negative_prompt = cur_negative_prompt * len(cur_positive_prompts) if len( cur_negative_prompt) != len(
+                            cur_positive_prompts) else cur_negative_prompt
                     id_images = pipe(
                         cur_positive_prompts,
                         num_inference_steps=_num_steps,
                         guidance_scale=guidance_scale,
                         height=height,
                         width=width,
-                        negative_prompt= cur_negative_prompt,
+                        negative_prompt=cur_negative_prompt,
                         generator=generator
                     ).images
 
             elif model_type == "img2img":
                 if use_kolor:
                     pipe.set_ip_adapter_scale([_Ip_Adapter_Strength])
-                    cur_negative_prompt=  cur_negative_prompt*len(cur_positive_prompts) if len( cur_negative_prompt)!=len(cur_positive_prompts) else  cur_negative_prompt
+                    cur_negative_prompt = cur_negative_prompt * len(cur_positive_prompts) if len(cur_negative_prompt)!=len(cur_positive_prompts) else  cur_negative_prompt
                     id_images = pipe(
                         prompt=cur_positive_prompts,
                         ip_adapter_image=input_id_images_dict[character_key],
-                        negative_prompt= cur_negative_prompt,
+                        negative_prompt=cur_negative_prompt,
                         num_inference_steps=_num_steps,
                         height=height,
                         width=width,
@@ -884,7 +889,7 @@ def process_generation(
                         num_images_per_prompt=1,
                         generator=generator,
                     ).images
-                elif  use_flux:
+                elif use_flux:
                     id_images = pipe(
                         prompt=cur_positive_prompts,
                         latents=None,
@@ -939,13 +944,14 @@ def process_generation(
                     "You should choice between original and Photomaker!",
                     f"But you choice {model_type}",
                 )
-            p_num+=1
+            p_num += 1
             # total_results = id_images + total_results
             # yield total_results
             for ind, img in enumerate(id_images):
                 results_dict[ref_indexs[ind]] = img
             # real_images = []
             yield [results_dict[ind] for ind in results_dict.keys()]
+
     write = False
     if not load_chars:
         real_prompts_inds = [
@@ -954,26 +960,28 @@ def process_generation(
     else:
         real_prompts_inds = [ind for ind in range(len(prompts))]
 
-    #print(real_prompts_inds)
+    # print(real_prompts_inds)
     real_prompt_no, negative_prompt_style = apply_style_positive(style_name, "real_prompt")
-    negative_prompt=str(negative_prompt)+str(negative_prompt_style)
+    negative_prompt = str(negative_prompt) + str(negative_prompt_style)
 
     for real_prompts_ind in real_prompts_inds:  # 非角色流程
         real_prompt = replace_prompts[real_prompts_ind]
         cur_character = get_ref_character(prompts[real_prompts_ind], character_dict)
-        #print(cur_character)
+        # print(cur_character)
         setup_seed(seed_)
+
         if len(cur_character) > 1 and model_type == "img2img":
-            raise "Temporarily Not Support Multiple character in Ref Image Mode!"
+            raise Exception("Temporarily Not Support Multiple character in Ref Image Mode!")
+
         generator = torch.Generator(device=device).manual_seed(seed_)
         cur_step = 0
-        real_prompt ,negative_prompt_style_no= apply_style_positive(style_name, real_prompt)
-        #print(real_prompt)
+        real_prompt, negative_prompt_style_no = apply_style_positive(style_name, real_prompt)
+        # print(real_prompt)
         if model_type == "txt2img":
-           # print(results_dict,real_prompts_ind)
+            # print(results_dict,real_prompts_ind)
             if use_flux:
                 results_dict[real_prompts_ind] = pipe(
-                    prompt= real_prompt,
+                    prompt=real_prompt,
                     num_inference_steps=_num_steps,
                     guidance_scale=guidance_scale,
                     output_type="pil",
@@ -1064,7 +1072,7 @@ def process_generation(
                         nc_flag=True if real_prompts_ind in nc_indexs else False,
                     ).images[0]
                 else:
-                    #print(real_prompts_ind, real_prompt, "v1 mode", )
+                    # print(real_prompts_ind, real_prompt, "v1 mode", )
                     results_dict[real_prompts_ind] = pipe(
                         real_prompt,
                         input_id_images=(
@@ -1087,9 +1095,11 @@ def process_generation(
                 f"But you choice {model_type}",
             )
         yield [results_dict[ind] for ind in results_dict.keys()]
+
     total_results = [results_dict[ind] for ind in range(len(prompts))]
     torch.cuda.empty_cache()
     yield total_results
+
 
 def nomarl_tensor_upscale(tensor, width, height):
     samples = tensor.movedim(-1, 1)
