@@ -47,11 +47,10 @@ def load_models(path,model_type,single_files,use_safetensors,photomake_mode,phot
             except:
                 try:
                     pipe = StableDiffusionXLPipeline.from_single_file(
-                        path, original_config_file=original_config_file,
-                        torch_dtype=torch.float16
+                        path, original_config_file=original_config_file, torch_dtype=torch.float16
                     )
-                except:
-                    raise "load pipe error"
+                except Exception as e:
+                    raise Exception("StableDiffusionXLPipeline of load pipe error - " + str(e))
 
         else:
             pipe = StableDiffusionXLPipeline.from_pretrained(
@@ -82,7 +81,7 @@ def load_models(path,model_type,single_files,use_safetensors,photomake_mode,phot
                         )
                     except:
                         raise "load pipe error"
-            
+
             else:
                 pipe = PhotoMakerStableDiffusionXLPipeline.from_pretrained(
                     path, torch_dtype=torch.float16, use_safetensors=use_safetensors
@@ -121,7 +120,7 @@ def load_models(path,model_type,single_files,use_safetensors,photomake_mode,phot
                 trigger_word="img",
                 pm_version= 'v2',
             )
-            
+
         if lora:
             if lora in lora_lightning_list:
                 pipe.load_lora_weights(lora_path)
@@ -133,4 +132,3 @@ def load_models(path,model_type,single_files,use_safetensors,photomake_mode,phot
     else:
         raise f"using{model_type}node,must choice{model_type}type in model_loader node"
     return pipe
-
