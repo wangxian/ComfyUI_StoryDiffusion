@@ -1499,12 +1499,13 @@ class Storydiffusion_Model_Loader:
         # 加载模型了
         if not repo_id and not ckpt_path:
             raise Exception("you need choice a ckpt_path model or input a repo_id")
-        elif not repo_id and ckpt_path:  # load ckpt
+        elif not repo_id and ckpt_path:  # load ckpt model
             pipe = load_models(ckpt_path, model_type=model_type, single_files=True, use_safetensors=True, photomake_mode=photomake_mode, photomaker_path=photomaker_path, lora=lora,
                                lora_path=lora_path,
                                trigger_words=trigger_words, lora_scale=lora_scale)
             set_attention_processor(pipe.unet, id_length, is_ipadapter=False)
-        else:  # if repo or no ckpt, choice repo
+        else:  # if repo or no ckpt, choice repo model
+            # 各种类型的 model 加载
             if repo_id.rsplit("/")[-1] == "playground-v2.5-1024px-aesthetic":
                 pipe = DiffusionPipeline.from_pretrained(
                     repo_id,
@@ -1516,7 +1517,7 @@ class Storydiffusion_Model_Loader:
                     repo_id, torch_dtype=torch.float16, use_safetensors=False
                 )
                 set_attention_processor(pipe.unet, id_length, is_ipadapter=False)
-            elif use_kolor:
+            elif use_kolor:  # Kolors model
                 from .kolors.pipelines.pipeline_stable_diffusion_xl_chatglm_256 import \
                     StableDiffusionXLPipeline as StableDiffusionXLPipelineKolors
                 from .kolors.models.modeling_chatglm import ChatGLMModel
@@ -1525,7 +1526,7 @@ class Storydiffusion_Model_Loader:
                 from .kolors.pipelines.pipeline_stable_diffusion_xl_chatglm_256_ipadapter import \
                     StableDiffusionXLPipeline as StableDiffusionXLPipelinekoloripadapter
                 text_encoder = ChatGLMModel.from_pretrained(
-                    f'{repo_id}/text_encoder',torch_dtype=torch.float16).half()
+                    f'{repo_id}/text_encoder', torch_dtype=torch.float16).half()
                 vae = AutoencoderKL.from_pretrained(f"{repo_id}/vae", revision=None).half()
                 tokenizer = ChatGLMTokenizer.from_pretrained(f'{repo_id}/text_encoder')
                 scheduler = EulerDiscreteScheduler.from_pretrained(f"{repo_id}/scheduler")
@@ -1563,11 +1564,11 @@ class Storydiffusion_Model_Loader:
                     pipe.load_ip_adapter(f'{repo_id}/Kolors-IP-Adapter-Plus', subfolder="",
                                          weight_name=["ip_adapter_plus_general.bin"])
                 pipe.enable_model_cpu_offload()
-            elif use_flux:
+            elif use_flux:  # FLUX model
                 # pip install optimum-quanto
                 # https://gist.github.com/AmericanPresidentJimmyCarter/873985638e1f3541ba8b00137e7dacd9
                 timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                weight_transformer = os.path.join(folder_paths.models_dir,"checkpoints",f"transformer_{timestamp}.pt")
+                weight_transformer = os.path.join(folder_paths.models_dir, "checkpoints", f"transformer_{timestamp}.pt")
                 dtype = torch.bfloat16
                 if not ckpt_path:
                     from optimum.quanto import freeze, qfloat8, quantize
@@ -1609,7 +1610,7 @@ class Storydiffusion_Model_Loader:
                     pipe.text_encoder_2 = text_encoder_2
                     pipe.transformer = transformer
 
-                else: # flux diff unet ,diff 0.30
+                else:  # flux diff unet ,diff 0.30
                     from diffusers import FluxTransformer2DModel, FluxPipeline
                     from transformers import T5EncoderModel, CLIPTextModel
                     from optimum.quanto import freeze, qfloat8, quantize
@@ -1675,21 +1676,23 @@ class Storydiffusion_Model_Loader:
 
                 pipe.enable_model_cpu_offload()
                 if lora:
-                    if not "Hyper" in lora_path : #can't support Hyper now
+                    if "Hyper" not in lora_path:  # can't support Hyper now
                         if not NF4:
                             pipe.load_lora_weights(lora_path)
                             pipe.fuse_lora(lora_scale=0.125)  # lora_scale=0.125
 
-            else: # SD dif_repo
-                pipe = load_models(repo_id, model_type=model_type, single_files=False, use_safetensors=True,photomake_mode=photomake_mode,
-                                    photomaker_path=photomaker_path, lora=lora,
+            else:  # SD dif_repo
+                pipe = load_models(repo_id, model_type=model_type, single_files=False, use_safetensors=True, photomake_mode=photomake_mode,
+                                   photomaker_path=photomaker_path, lora=lora,
                                    lora_path=lora_path,
                                    trigger_words=trigger_words, lora_scale=lora_scale)
                 set_attention_processor(pipe.unet, id_length, is_ipadapter=False)
+
         if vae_id != "none":
             if not use_flux:
                 vae_id = folder_paths.get_full_path("vae", vae_id)
-                pipe.vae=AutoencoderKL.from_single_file(vae_id, torch_dtype=torch.float16)
+                pipe.vae = AutoencoderKL.from_single_file(vae_id, torch_dtype=torch.float16)
+
         load_chars = False
         if not use_kolor and not use_flux:
             pipe.scheduler = scheduler_choice.from_config(pipe.scheduler.config)
@@ -1698,12 +1701,13 @@ class Storydiffusion_Model_Loader:
             unet = pipe.unet
             load_chars = load_character_files_on_running(unet, character_files=char_files)
             if device != "mps":
-               pipe.to("cuda")
+                pipe.to("cuda")
+
         # if device != "mps":
         #     pipe.enable_model_cpu_offload()
         torch.cuda.empty_cache()
-        model={"pipe":pipe,"use_flux":use_flux,"use_kolor":use_kolor,"photomake_mode":photomake_mode,"trigger_words":trigger_words,"lora_scale":lora_scale,
-               "load_chars":load_chars,"repo_id":repo_id,"lora_path":lora_path,"ckpt_path":ckpt_path,"model_type":model_type, "lora": lora,"scheduler":scheduler,"auraface":auraface}
+        model = {"pipe": pipe, "use_flux": use_flux, "use_kolor": use_kolor, "photomake_mode": photomake_mode, "trigger_words": trigger_words, "lora_scale": lora_scale,
+                 "load_chars": load_chars, "repo_id": repo_id, "lora_path": lora_path, "ckpt_path": ckpt_path, "model_type": model_type, "lora": lora, "scheduler": scheduler, "auraface": auraface}
         return (model,)
 
 
@@ -1751,35 +1755,35 @@ class Storydiffusion_Sampler:
                 "guidance_list": ("STRING", {"multiline": True, "default": "0., 0.25, 0.4, 0.75;0.6, 0.25, 1., 0.75"}),
             },
             "optional": {"image": ("IMAGE",),
-                        "control_image": ("IMAGE",),},
+                         "control_image": ("IMAGE",), },
             }
-
 
     RETURN_TYPES = ("IMAGE", "STRING",)
     RETURN_NAMES = ("image", "prompt_array",)
     FUNCTION = "story_sampler"
     CATEGORY = "Storydiffusion"
 
-    def story_sampler(self, model, character_prompt,scene_prompts,split_prompt, negative_prompt, img_style, seed, steps,
-                  cfg, ip_adapter_strength, style_strength_ratio,clip_vision,
-                  role_scale, mask_threshold, start_step,save_character,controlnet_model_path,controlnet_scale,guidance_list,**kwargs):
+    def story_sampler(self, model, character_prompt, scene_prompts, split_prompt, negative_prompt, img_style, seed, steps,
+                      cfg, ip_adapter_strength, style_strength_ratio, clip_vision,
+                      role_scale, mask_threshold, start_step, save_character, controlnet_model_path, controlnet_scale, guidance_list, **kwargs):
         # get value from dict
-        pipe=model.get("pipe")
-        use_flux=model.get("use_flux")
-        photomake_mode=model.get("photomake_mode")
-        use_kolor=model.get("use_kolor")
-        load_chars=model.get("load_chars")
-        model_type=model.get("model_type")
-        trigger_words=model.get("trigger_words")
-        repo_id=model.get("repo_id")
-        lora_path=model.get("lora_path")
-        ckpt_path=model.get("ckpt_path")
-        lora=model.get("lora")
-        lora_scale =model.get("lora_scale")
-        auraface=model.get("auraface")
-        scheduler=model.get("scheduler")
+        pipe = model.get("pipe")
+        use_flux = model.get("use_flux")
+        photomake_mode = model.get("photomake_mode")
+        use_kolor = model.get("use_kolor")
+        load_chars = model.get("load_chars")
+        model_type = model.get("model_type")
+        trigger_words = model.get("trigger_words")
+        repo_id = model.get("repo_id")
+        lora_path = model.get("lora_path")
+        ckpt_path = model.get("ckpt_path")
+        lora = model.get("lora")
+        lora_scale = model.get("lora_scale")
+        auraface = model.get("auraface")
+        scheduler = model.get("scheduler")
         scheduler_choice = get_scheduler(scheduler)
         image = kwargs.get("image")
+
         # 格式化文字内容
         if split_prompt:
             scene_prompts.replace("\n", "").replace(split_prompt, ";\n").strip()
@@ -1796,25 +1800,26 @@ class Storydiffusion_Sampler:
                         character_prompt.replace("\n", "").replace("[", "\n[", 2).strip()  # 多行角色在这里强行转为双角色
 
         # 从角色列表获取角色方括号信息
+        # at 2024.9.5 现在双角色同框的加载方式改成[A]...[B]...模式，原来的（A and B）模式已经摈弃！！！！
         char_origin = character_prompt.splitlines()
-        char_describe = char_origin # [A a men...,B a girl ]
+        char_describe = char_origin  # [A a men..., B a girl] 不对了？
         char_origin = [char.split("]")[0] + "]" for char in char_origin]
 
         # 判断是否有双角色prompt，如果有，获取双角色列表及对应的位置列表，
         prompts_origin = scene_prompts.splitlines()
-        positions_dual = [index for index, prompt in enumerate(prompts_origin) if len(extract_content_from_brackets(prompt))>=2]  #改成单句中双方括号方法，利于MS组句，[A]... [B]...[C]
-        prompts_dual = [prompt for prompt in prompts_origin if len(extract_content_from_brackets(prompt))>=2]
+        positions_dual = [index for index, prompt in enumerate(prompts_origin) if len(extract_content_from_brackets(prompt)) >= 2]  # 改成单句中双方括号方法，利于MS组句，[A]... [B]...[C]
+        prompts_dual = [prompt for prompt in prompts_origin if len(extract_content_from_brackets(prompt)) >= 2]
 
         # positions_dual = [index for index, prompt in enumerate(prompts_origin) if has_parentheses(prompt)]
         # prompts_dual = [prompt for prompt in prompts_origin if has_parentheses(prompt)]
 
-        if len(char_origin) == 2:
-            positions_char_1 = [index for index, prompt in enumerate(prompts_origin) if char_origin[0] in prompt][
-                0]  # 获取角色出现的索引列表，并获取首次出现的位置
-            positions_char_2 = [index for index, prompt in enumerate(prompts_origin) if char_origin[1] in prompt][
-                0]  # 获取角色出现的索引列表，并获取首次出现的位置
+        print("多角色信息:", char_origin)
 
-        if model_type=="img2img":
+        if len(char_origin) == 2:
+            positions_char_1 = [index for index, prompt in enumerate(prompts_origin) if char_origin[0] in prompt][0]  # 获取角色出现的索引列表，并获取首次出现的位置
+            positions_char_2 = [index for index, prompt in enumerate(prompts_origin) if char_origin[1] in prompt][0]  # 获取角色出现的索引列表，并获取首次出现的位置
+
+        if model_type == "img2img":
             d1, _, _, _ = image.size()
             if d1 == 1:
                 image_load = [nomarl_upscale(image, width, height)]
@@ -1832,12 +1837,14 @@ class Storydiffusion_Sampler:
                                      height,
                                      load_chars,
                                      lora,
-                                     trigger_words,photomake_mode,use_kolor,use_flux,auraface)
+                                     trigger_words, photomake_mode, use_kolor, use_flux, auraface)
 
         else:
             upload_images = None
             _Ip_Adapter_Strength = 0.5
             _style_strength_ratio = 20
+
+            # 这个生成的是什么？
             gen = process_generation(pipe, upload_images, model_type, steps, img_style, _Ip_Adapter_Strength,
                                      _style_strength_ratio, cfg,
                                      seed, id_length,
@@ -1848,37 +1855,46 @@ class Storydiffusion_Sampler:
                                      height,
                                      load_chars,
                                      lora,
-                                     trigger_words,photomake_mode,use_kolor,use_flux,auraface)
+                                     trigger_words, photomake_mode, use_kolor, use_flux, auraface)
 
         for value in gen:
-            print(type(value))
+            print("这是啥？", type(value))
+
+        # 角色信息，图生图的时候使用
         image_pil_list = phi_list(value)
 
         image_pil_list_ms = image_pil_list.copy()
         if save_character:
-            print("saving character...")
+            print("保存角色 saving character...")
             save_results(pipe.unet)
-        if clip_vision=="none":
-            clip_vision =None
+
+        if clip_vision == "none":
+            clip_vision = None
         else:
             clip_vision = folder_paths.get_full_path("clip_vision", clip_vision)
+
+        # 双角色
         if prompts_dual:
             if not clip_vision:
-                raise "need a clip_vison weight."
+                raise Exception("need a clip_vison weight.")
             if use_flux or use_kolor:
-                raise "flux or kolor don't support MS diffsion."
-            print("start sampler dual prompt")
+                raise Exception("flux or kolor don't support MS diffsion.")
+
+            print("开始启动双角色采样提示词 | start sampler dual prompt")
+
             control_image = None
-            if controlnet_model_path!="none":
+            if controlnet_model_path != "none":
                 control_image = kwargs["control_image"]
+
+            # 角色信息 ...?
             image_a = image_pil_list_ms[positions_char_1]
             image_b = image_pil_list_ms[positions_char_2]
             image_dual = msdiffusion_main(pipe, image_a, image_b, prompts_dual, width, height, steps, seed,
-                                          img_style, char_describe,char_origin,negative_prompt, clip_vision, model_type, lora, lora_path, lora_scale,
-                                        trigger_words, ckpt_path,repo_id, role_scale,
-                                          mask_threshold, start_step,controlnet_model_path,control_image,controlnet_scale,cfg,guidance_list,scheduler_choice)
+                                          img_style, char_describe, char_origin, negative_prompt, clip_vision, model_type, lora, lora_path, lora_scale,
+                                          trigger_words, ckpt_path, repo_id, role_scale,
+                                          mask_threshold, start_step, controlnet_model_path, control_image, controlnet_scale, cfg, guidance_list, scheduler_choice)
             j = 0
-            for i in positions_dual: #重新将双人场景插入原序列
+            for i in positions_dual:  # 重新将双人场景插入原序列
                 img = image_dual[j]
                 image_pil_list.insert(int(i), img)
                 j += 1
@@ -1886,6 +1902,7 @@ class Storydiffusion_Sampler:
             torch.cuda.empty_cache()
         else:
             image_list = narry_list(image_pil_list)
+
         image = torch.from_numpy(np.fromiter(image_list, np.dtype((np.float32, (height, width, 3)))))
         torch.cuda.empty_cache()
         return (image, scene_prompts,)
