@@ -38,7 +38,7 @@ else:
 from huggingface_hub import hf_hub_download
 from diffusers import (StableDiffusionXLPipeline, DiffusionPipeline, DDIMScheduler, ControlNetModel,
                        KDPM2AncestralDiscreteScheduler, LMSDiscreteScheduler,
-                        DPMSolverMultistepScheduler, DPMSolverSinglestepScheduler,
+                       DPMSolverMultistepScheduler, DPMSolverSinglestepScheduler,
                        EulerDiscreteScheduler, HeunDiscreteScheduler, UNet2DConditionModel,
                        KDPM2DiscreteScheduler,
                        EulerAncestralDiscreteScheduler, UniPCMultistepScheduler, AutoencoderKL,
@@ -355,6 +355,7 @@ def set_attention_processor(unet, id_length, is_ipadapter=False):
 
     unet.set_attn_processor(copy.deepcopy(attn_procs))
 
+
 def load_single_character_weights(unet, filepath):
     """
     从指定文件中加载权重到 attention_processor 类的 id_bank 中。
@@ -367,7 +368,7 @@ def load_single_character_weights(unet, filepath):
     weights_to_load.eval()
     character = weights_to_load["character"]
     description = weights_to_load["description"]
-    #print(character)
+    # print(character)
     for attn_name, attn_processor in unet.attn_processors.items():
         if isinstance(attn_processor, SpatialAttnProcessor2_0):
             # 转移权重到GPU（如果GPU可用的话）并赋值给id_bank
@@ -385,9 +386,9 @@ def load_character_files_on_running(unet, character_files: str):
     if character_files == "":
         return False
     weights_list = os.listdir(character_files)#获取路径下的权重列表
-    #character_files_arr = character_files.splitlines()
+    # character_files_arr = character_files.splitlines()
     for character_file in weights_list:
-        path_cur=os.path.join(character_files,character_file)
+        path_cur = os.path.join(character_files, character_file)
         load_single_character_weights(unet, path_cur)
     return True
 
@@ -405,28 +406,33 @@ def save_single_character_weights(unet, character, description, filepath):
     for attn_name, attn_processor in unet.attn_processors.items():
         if isinstance(attn_processor, SpatialAttnProcessor2_0):
             # 将每个 Tensor 转到 CPU 并转为列表，以确保它可以被序列化
-            #print(attn_name, attn_processor)
+            # print(attn_name, attn_processor)
             weights_to_save[attn_name] = {}
             for step_key in attn_processor.id_bank[character].keys():
                 weights_to_save[attn_name][step_key] = [
                     tensor.cpu()
                     for tensor in attn_processor.id_bank[character][step_key]
                 ]
+
     # 使用torch.save保存权重
     torch.save(weights_to_save, filepath)
 
 
-
 def save_results(unet):
+    # 文件在 ./ComfyUI_StoryDiffusion/weigths/pt 下，以时间为文件名
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    weight_folder_name =os.path.join(base_pt,f"{timestamp}")
-    #创建文件夹
+    weight_folder_name = os.path.join(base_pt, f"{timestamp}")
+
+    print("人物权重保存目录 | weight_folder_name = " + weight_folder_name)
+
+    # 创建文件夹
     if not os.path.exists(weight_folder_name):
         os.makedirs(weight_folder_name)
+
     global character_dict
     for char in character_dict:
         description = character_dict[char]
-        save_single_character_weights(unet,char,description,os.path.join(weight_folder_name, f'{char}.pt'))
+        save_single_character_weights(unet, char, description, os.path.join(weight_folder_name, f'{char}.pt'))
 
 
 class SpatialAttnProcessor2_0(torch.nn.Module):
@@ -1709,6 +1715,8 @@ class Storydiffusion_Model_Loader:
             pipe.enable_freeu(s1=0.6, s2=0.4, b1=1.1, b2=1.2)
             pipe.enable_vae_slicing()
             unet = pipe.unet
+
+            # 加载上次保存的角色信息
             load_chars = load_character_files_on_running(unet, character_files=char_files)
             if device != "mps":
                 pipe.to("cuda")
@@ -1823,7 +1831,8 @@ class Storydiffusion_Sampler:
         # positions_dual = [index for index, prompt in enumerate(prompts_origin) if has_parentheses(prompt)]
         # prompts_dual = [prompt for prompt in prompts_origin if has_parentheses(prompt)]
 
-        print("多角色信息:", char_origin)
+        print("提取到的角色信息 char_origin = ", char_origin)
+        print("单场景-双角色信息 prompts_dual = ", prompts_dual)
 
         if len(char_origin) == 2:
             positions_char_1 = [index for index, prompt in enumerate(prompts_origin) if char_origin[0] in prompt][0]  # 获取角色出现的索引列表，并获取首次出现的位置
@@ -1867,14 +1876,16 @@ class Storydiffusion_Sampler:
                                      lora,
                                      trigger_words, photomake_mode, use_kolor, use_flux, auraface)
 
+        # 开始生成图像
         for value in gen:
-            print("这是啥？", type(value))
+            print("生成后的图像 | value in yield gen, value=", value)
 
         # 角色信息，图生图的时候使用
         image_pil_list = phi_list(value)
 
         image_pil_list_ms = image_pil_list.copy()
         if save_character:
+            # 文件在 ./ComfyUI_StoryDiffusion/weigths/pt 下，以时间为文件名
             print("保存角色 saving character...")
             save_results(pipe.unet)
 
@@ -1882,6 +1893,8 @@ class Storydiffusion_Sampler:
             clip_vision = None
         else:
             clip_vision = folder_paths.get_full_path("clip_vision", clip_vision)
+
+        print(f"开始启动双角色提示词 | prompts_dual = {prompts_dual}")
 
         # 双角色
         if prompts_dual:
