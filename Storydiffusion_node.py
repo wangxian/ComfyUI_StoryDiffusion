@@ -53,7 +53,7 @@ from diffusers.schedulers.scheduling_ddim import DDIMScheduler
 import torch.nn.functional as F
 from .utils.utils import get_comic
 from .utils.style_template import styles
-from .utils.load_models_utils import  load_models, get_instance_path, get_lora_dict
+from .utils.load_models_utils import load_models, get_instance_path, get_lora_dict
 import folder_paths
 from comfy.utils import common_upscale
 
@@ -63,7 +63,7 @@ global write
 global height, width
 STYLE_NAMES = list(styles.keys())
 
-photomaker_dir=os.path.join(folder_paths.models_dir, "photomaker")
+photomaker_dir = os.path.join(folder_paths.models_dir, "photomaker")
 
 device = (
     "cuda"
@@ -222,13 +222,13 @@ def get_image_path_list(folder_name):
 
 def apply_style_positive(style_name: str, positive: str):
     p, n = styles.get(style_name, styles[style_name])
-    #print(p, "test0", n)
-    return p.replace("{prompt}", positive),n
+    # print(p, "test0", n)
+    return p.replace("{prompt}", positive), n
 
 
 def apply_style(style_name: str, positives: list, negative: str = ""):
     p, n = styles.get(style_name, styles[style_name])
-    #print(p,"test1",n)
+    # print(p,"test1",n)
     return [
         p.replace("{prompt}", positive) for positive in positives
     ], n + " " + negative
@@ -982,7 +982,9 @@ def process_generation(
         generator = torch.Generator(device=device).manual_seed(seed_)
         cur_step = 0
         real_prompt, negative_prompt_style_no = apply_style_positive(style_name, real_prompt)
-        # print(real_prompt)
+
+        print(f"实际执行的提示词，real_prompt={real_prompt} negative_prompt={negative_prompt}")
+
         if model_type == "txt2img":
             # print(results_dict,real_prompts_ind)
             if use_flux:
