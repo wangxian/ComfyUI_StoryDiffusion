@@ -806,7 +806,7 @@ def process_generation(
         input_id_images_dict = {}
 
         if len(upload_images) != len(character_dict.keys()):
-            raise f"You upload images({len(upload_images)}) is not equal to the number of characters({len(character_dict.keys())})!"
+            raise Exception(f"You upload images({len(upload_images)}) is not equal to the number of characters({len(character_dict.keys())})!")
 
         for ind, img in enumerate(upload_images):
             input_id_images_dict[character_list[ind]] = [img]  # 已经pil转化了 不用load
