@@ -1906,6 +1906,9 @@ class Storydiffusion_Sampler:
         if prompts_dual:
             if not clip_vision:
                 raise Exception("need a clip_vison weight.")
+
+            # flux 和 kolor 不支持 msdiffusion，所以 flux 和 kolor 暂时不支持单图两角色的处理
+            # 暂时不支持，等待上游模型的支持？
             if use_flux or use_kolor:
                 raise Exception("flux or kolor don't support MS diffsion.")
 
