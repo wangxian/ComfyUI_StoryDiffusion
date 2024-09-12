@@ -226,14 +226,14 @@ def find_directories(base_path):
     return directories
 
 
-base_pt = os.path.join(photomaker_dir,"pt")
+base_pt = os.path.join(photomaker_dir, "pt")
 if not os.path.exists(base_pt):
     os.makedirs(base_pt)
 pt_path_list = find_directories(base_pt)
 if pt_path_list:
-    character_weights=["none"]+pt_path_list
+    character_weights = ["none"] + pt_path_list
 else:
-    character_weights=["none",]
+    character_weights = ["none",]
 
 
 def get_scheduler(name):
