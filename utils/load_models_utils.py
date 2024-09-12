@@ -18,6 +18,7 @@ def get_instance_path(path):
 
 original_config_file=get_instance_path(os.path.join(path_dir,'config','sd_xl_base.yaml'))
 loras_path = get_instance_path(os.path.join(path_dir,"config","lora.yaml"))
+add_config=os.path.join(path_dir,"local_repo")
 
 def get_lora_dict():
     # 打开并读取YAML文件
@@ -41,13 +42,20 @@ def load_models(path,model_type,single_files,use_safetensors,photomake_mode,phot
     path=get_instance_path(path)
     if model_type == "txt2img":
         if single_files:
+
             try:
                 pipe = StableDiffusionXLPipeline.from_single_file(
-                    path, original_config=original_config_file, torch_dtype=torch.float16)
-            except:
+                    path,
+                    config=add_config,
+                    original_config=original_config_file,
+                    torch_dtype=torch.float16)
+            except Exception as e:
                 try:
                     pipe = StableDiffusionXLPipeline.from_single_file(
-                        path, original_config_file=original_config_file, torch_dtype=torch.float16
+                        path,
+                        config=add_config,
+                        original_config_file=original_config_file,
+                        torch_dtype=torch.float16
                     )
                 except Exception as e:
                     raise Exception("StableDiffusionXLPipeline of load pipe error - " + str(e))
@@ -71,12 +79,12 @@ def load_models(path,model_type,single_files,use_safetensors,photomake_mode,phot
                 # print("loading from a single_files")
                 try:
                     pipe = PhotoMakerStableDiffusionXLPipeline.from_single_file(
-                        path, original_config=original_config_file,
+                        path,config=add_config, original_config=original_config_file,
                         torch_dtype=torch.float16, use_safetensors=use_safetensors)
                 except:
                     try:
                         pipe = PhotoMakerStableDiffusionXLPipeline.from_single_file(
-                            path, original_config_file=original_config_file,
+                            path, config=add_config,original_config_file=original_config_file,
                             torch_dtype=torch.float16, use_safetensors=use_safetensors
                         )
                     except:
@@ -98,12 +106,12 @@ def load_models(path,model_type,single_files,use_safetensors,photomake_mode,phot
                 # print("loading from a single_files")
                 try:
                     pipe = PhotoMakerStableDiffusionXLPipelineV2.from_single_file(
-                        path, original_config=original_config_file,
+                        path,config=add_config, original_config=original_config_file,
                         torch_dtype=torch.float16, use_safetensors=use_safetensors)
                 except:
                     try:
                         pipe = PhotoMakerStableDiffusionXLPipelineV2.from_single_file(
-                            path, original_config_file=original_config_file,
+                            path, config=add_config,original_config_file=original_config_file,
                             torch_dtype=torch.float16, use_safetensors=use_safetensors
                         )
                     except:
