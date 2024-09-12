@@ -945,7 +945,7 @@ def process_generation(
         cur_step = 0
         real_prompt, negative_prompt_style_no = apply_style_positive(style_name, real_prompt)
 
-        print(f"实际执行的提示词，real_prompt={real_prompt} negative_prompt={negative_prompt}")
+        print(f"实际执行的提示词，\n正向提示词={real_prompt} \n反向提示词={negative_prompt}")
 
         if model_type == "txt2img":
             # print(results_dict,real_prompts_ind)
