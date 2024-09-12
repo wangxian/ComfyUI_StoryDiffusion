@@ -49,6 +49,16 @@ style_list = [
         "prompt": "Tiny cute isometric {prompt} . in a cutaway box, soft smooth lighting, soft colors, 100mm lens, 3d blender render",
         "negative_prompt": "photorealistic,35mm film,deformed,glitch,blurry,noisy,off-center,deformed,cross-eyed,closed eyes,ugly,disfigured,mutated,realism,realistic,impressionism,expressionism,acrylic,lowres,text,error,extra digit,fewer digits,cropped, worst quality, low quality, normal quality, jpeg artifacts, signature,watermark, username,",
     },
+    {
+        "name": "Japanese_animation_style",
+        "prompt": "Japanese animation style, {prompt}. clean lines, strong contours, dynamic poses, bright colors, high saturation，highly detailed,official art,ultra high res,Precise details,extremely clear 8K wallpaper,saturated colours",
+        "negative_prompt": "anime, photorealistic, 35mm film, deformed, glitch, blurry, noisy, off-center, deformed, cross-eyed, closed eyes,ugly, disfigured, mutated, realism, realistic, impressionism, expressionism,acrylic, lowres,text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+    },
+    {
+        "name": "Binary_style",
+        "prompt": "Binary style, {prompt}, cute images, rich colors, fantasy elements, big eyes, highly detailed,official art,ultra high res,Precise details,extremely clear 8K wallpaper,saturated colours",
+        "negative_prompt": "anime, photorealistic, 35mm film, deformed, glitch, blurry, noisy, off-center, deformed, cross-eyed, closed eyes,ugly, disfigured, mutated, realism, realistic, impressionism, expressionism, acrylic, lowres,text, error,extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry",
+    },
 ]
 
 styles = {k["name"]: (k["prompt"], k["negative_prompt"]) for k in style_list}

@@ -1756,7 +1756,7 @@ class Storydiffusion_Sampler:
                 "img_style": (
                     ["No_style", "Realistic", "Japanese_Anime", "Digital_Oil_Painting", "Pixar_Disney_Character",
                      "Photographic", "Comic_book",
-                     "Line_art", "Black_and_White_Film_Noir", "Isometric_Rooms"],),
+                     "Line_art", "Black_and_White_Film_Noir", "Isometric_Rooms", "Japanese_animation_style", "Binary_style"],),
                 "seed": ("INT", {"default": 0, "min": 0, "max": MAX_SEED}),
                 "steps": ("INT", {"default": 20, "min": 1, "max": 100}),
                 "cfg": ("FLOAT", {"default": 7, "min": 0.1, "max": 10.0, "step": 0.1, "round": 0.01}),
