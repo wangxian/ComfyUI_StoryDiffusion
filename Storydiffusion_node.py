@@ -1447,7 +1447,7 @@ class Storydiffusion_Model_Loader:
             lora = None
 
         # global
-        global  attn_procs
+        global attn_procs
         global sa32, sa64, write, height_s, width_s
         global attn_count, total_count, id_length, total_length, cur_step
 

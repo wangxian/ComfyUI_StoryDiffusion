@@ -454,14 +454,13 @@ def character_to_dict(general_prompt,lora,add_trigger_words):
             key = string[start:end+1]
             value = string[end+1:]
             if "#" in value:
-                value =  value.rpartition('#')[0] 
+                value = value.rpartition('#')[0]
             if key in character_dict:
                 raise f"duplicate character descirption:{key}"
             character_dict[key] = value
             character_list.append(key)
 
-        
-    return character_dict,character_list 
+    return character_dict, character_list
 
 def get_id_prompt_index(character_dict,id_prompts):
     replace_id_prompts = []
@@ -509,15 +508,15 @@ def process_original_prompt(character_dict,prompts,id_length):
     # print(character_index_dict,66666)
     for character_key in character_index_dict.keys():
         if character_key not in character_index_dict:
-            raise f"{character_key} not have prompt description, please remove it"
+            raise Exception(f"{character_key} not have prompt description, please remove it")
         index_list = character_index_dict[character_key]
         index_list = [index for index in index_list if len(invert_character_index_dict[index]) == 1]
         # print(index_list,55555)
         if len(index_list) < id_length:
-            raise f"{character_key} not have enough prompt description, need no less than {id_length}, but you give {len(index_list)}"
+            raise Exception(f"{character_key} not have enough prompt description, need no less than {id_length}, but you give {len(index_list)}")
         ref_index_dict[character_key] = index_list[:id_length]
         ref_totals = ref_totals + index_list[:id_length]
-    return character_index_dict,invert_character_index_dict,replace_prompts,ref_index_dict,ref_totals
+    return character_index_dict, invert_character_index_dict, replace_prompts, ref_index_dict, ref_totals
 
 
 def get_ref_character(real_prompt,character_dict):
